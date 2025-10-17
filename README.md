@@ -25,8 +25,7 @@ The **ProspectSearchAgent** automatically:
 
 Webhook → Apollo API → SerpAPI Jobs → Merge Results (Code) → Respond to Webhook
 
-markdown
-Copy code
+
 
 **Description:**
 1. **Webhook** — Receives ICP JSON input from Postman.  
@@ -59,7 +58,6 @@ Resulting in a confidence score (0.0–1.0) for each company.
 
 🧱 Example ICP Input (Postman)
 json
-Copy code
 {
   "ICP": {
     "industry": ["B2B Software"],
@@ -124,7 +122,6 @@ See merged and scored output in the Merge Results node.
 
 📂 Repository Structure
 bash
-Copy code
 ProspectSearchAgent/
 │
 ├── README.md                # Project documentation
