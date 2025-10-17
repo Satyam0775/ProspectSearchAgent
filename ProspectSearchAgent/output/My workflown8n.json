@@ -1,0 +1,144 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "54c0f184-036d-4576-908c-b2764f318a6f",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -208,
+        16
+      ],
+      "id": "7a292653-428b-4833-8cab-decb84f08db0",
+      "name": "Webhook",
+      "webhookId": "54c0f184-036d-4576-908c-b2764f318a6f"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apollo.io/v1/organizations/enrich",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "h1pHw9y_PZBJy7sliwuGMA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "domain",
+              "value": "snowflake.com"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        16
+      ],
+      "id": "2189965c-57fb-481a-aac3-ffc72d2039e8",
+      "name": "Apollo API"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google_jobs"
+            },
+            {
+              "name": "q",
+              "value": "Snowflake hiring"
+            },
+            {
+              "name": "api_key",
+              "value": "2734440723a44965d742e83a88d4563b88ed622648ae04d83f582eb7987fed71"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        16
+      ],
+      "id": "65f79f97-21b8-45ee-8f59-8e489961bfa5",
+      "name": "SerpAPI Jobs"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get Apollo and SerpAPI outputs safely\nconst apollo = $node[\"Apollo API\"].json || {};\nconst serpapi = $node[\"SerpAPI Jobs\"].json || {};\n\n// Extract company information from Apollo API response\nconst org = apollo.organization || apollo;\n\n// Basic company info\nconst companyName = org.name || \"Unknown Company\";\nconst domain = org.primary_domain || org.website_url || \"N/A\";\nconst industry = org.industry || \"Not specified\";\nconst revenue = org.organization_revenue_printed || org.annual_revenue_printed || \"Unknown\";\nconst employeeCount = org.estimated_num_employees || org.employee_count || \"Unknown\";\nconst location = org.raw_address || \"Unknown\";\n\n// Extract keywords (if available)\nconst keywords = Array.isArray(org.keywords) ? org.keywords.slice(0, 10) : [];\n\n// Extract tech stack\nconst techStack = Array.isArray(org.technology_names) ? org.technology_names.slice(0, 10) : [];\n\n// Hiring signal (from SerpAPI jobs)\nconst hiringSignal = Array.isArray(serpapi.jobs_results) && serpapi.jobs_results.length > 0;\n\n// Simple confidence score formula\nlet confidence = 0.4; // base weight for firmographic match\nif (techStack.length > 0) confidence += 0.3;\nif (hiringSignal) confidence += 0.3;\n\n// Build structured final object\nreturn [\n  {\n    json: {\n      company_name: companyName,\n      domain: domain,\n      industry: industry,\n      revenue: revenue,\n      employee_count: employeeCount,\n      location: location,\n      keywords: keywords,\n      tech_stack: techStack,\n      signals: {\n        recent_hiring: hiringSignal\n      },\n      source: [\"Apollo\", \"SerpAPI\"],\n      confidence: confidence.toFixed(2)\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        16
+      ],
+      "id": "08b2e127-6765-4fd0-995a-7b5391ce2895",
+      "name": "Merge Results"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Apollo API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apollo API": {
+      "main": [
+        [
+          {
+            "node": "SerpAPI Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI Jobs": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5e44cd59-ec8c-4828-a1ef-fd6e991c1de0",
+  "meta": {
+    "instanceId": "e08fc75ec08a821628fdaf0d7669c264cc72093a44800a70721688931007866e"
+  },
+  "id": "gkPSHND9H9vfIDZd",
+  "tags": []
+}
