@@ -1,63 +1,76 @@
-# 🧠 ProspectSearchAgent — AI-Powered B2B Prospect Finder
+🧠 ProspectSearchAgent — AI-Powered B2B Prospect Finder
 
-This project is part of the **Analytos.ai Data Science Intern Task**, where I designed an **autonomous agent workflow** that automatically discovers and enriches B2B companies matching a given **Ideal Customer Profile (ICP)** using free and public APIs.  
-The workflow was built and orchestrated entirely inside **n8n (no-code + AI-assisted automation)**.
+This project is part of the Analytos.ai Data Science Intern Task, where I designed an AI-powered ProspectSearchAgent that automatically discovers and enriches B2B companies matching a given Ideal Customer Profile (ICP) using multiple free and public APIs.
 
----
+The agent’s orchestration logic was developed using LangChain (Python), while the end-to-end workflow automation and API integration were implemented using n8n Cloud for visualization and execution.
 
-## 🚀 Objective
+🚀 Objective
 
-The **ProspectSearchAgent** automatically:
-- Takes ICP input (industry, keywords, geography, etc.)
-- Queries multiple APIs to discover companies
-- Fetches firmographic and hiring data
-- Enriches results with technology stack
-- Scores and returns structured JSON output
+The ProspectSearchAgent autonomously:
 
----
+Takes ICP input (industry, keywords, geography, etc.)
 
-## 🧩 Workflow Overview
+Queries multiple APIs (Apollo, BuiltWith, SerpAPI)
 
-**n8n Cloud Workflow:**  
-🔗 [View Live Workflow](https://satyam-prospectagent.app.n8n.cloud/workflow/gkPSHND9H9vfIDZd)
+Fetches firmographic, hiring, and tech stack data
 
-**Flow:**
+Merges and enriches the results
 
-Webhook → Apollo API → SerpAPI Jobs → Merge Results (Code) → Respond to Webhook
+Assigns a confidence score based on matching criteria
+
+Returns structured JSON output ready for analysis
+
+🧩 System Architecture
+Local Orchestration: LangChain
+
+Used to define the logical flow and data dependencies.
+
+Each API integration is treated as a LangChain “Tool.”
+
+Handles merging, deduplication, and scoring logic programmatically.
+
+End-to-End Automation: n8n Workflow
+
+The visual workflow in n8n executes API calls and data enrichment steps automatically.
+
+Used for testing and validating the full pipeline with real-time API calls.
+
+Workflow Structure:
+
+Webhook → Apollo API → BuiltWith API → SerpAPI Jobs → Merge Results (Code Node) → Respond to Webhook
+
+⚙️ Workflow Description
+Step	Node	Function
+1️⃣	Webhook	Receives ICP input JSON from Postman or LangChain call.
+2️⃣	Apollo API	Fetches firmographics like name, revenue, industry, and employees.
+3️⃣	BuiltWith API	Extracts the company’s technology stack and hosting information.
+4️⃣	SerpAPI (Jobs)	Retrieves hiring data and job listings for hiring signal detection.
+5️⃣	Merge Results (LangChain Logic / n8n Code Node)	Merges and enriches all API responses into one structured output.
+6️⃣	Respond to Webhook	Returns the final JSON to the client or Postman.
+🧠 APIs Used
+Function	API	Description
+Company Data	Apollo.io API
+	Provides company firmographics, keywords, and contact data.
+Tech Stack Data	BuiltWith API
+	Detects technology stack and platform usage for domains.
+Hiring Signals	SerpAPI
+	Extracts real-time job listings from Google Jobs.
+Workflow Orchestration	LangChain
+	Manages logical flow and tool execution locally.
+Automation Platform	n8n Cloud
+	Used for executing and visualizing the workflow end-to-end.
+🧮 Confidence Scoring Logic
+
+Implemented using LangChain Tool Logic and replicated inside the Merge Results node:
+
+score = 0.4 * firmographic_match
+      + 0.3 * tech_stack_match
+      + 0.3 * hiring_signal_detected
 
 
-
-**Description:**
-1. **Webhook** — Receives ICP JSON input from Postman.  
-2. **Apollo API** — Fetches firmographic details (revenue, industry, employees, etc.) using free developer API.  
-3. **SerpAPI** — Queries Google Jobs to identify recent hiring signals.  
-4. **Merge Results (Code Node)** — Combines Apollo + SerpAPI data, extracts tech stack, calculates confidence score, and formats clean JSON output.  
-5. **Respond to Webhook** — Sends the final JSON response back to Postman.
-
----
-
-## 🧠 APIs Used
-
-| Function | API | Description |
-|-----------|-----|-------------|
-| Company & Contact Search | [Apollo.io API](https://apollo.io/) | Provides company firmographics, revenue, keywords, and tech stack. |
-| Hiring Signals | [SerpAPI](https://serpapi.com/) | Extracts live job postings from Google Jobs results. |
-| Orchestration | [n8n Cloud](https://n8n.io/) | Used to automate and connect all APIs with custom logic. |
-
----
-
-## 🧮 Confidence Scoring Logic
-
-Implemented in **Merge Results** node (JavaScript):
-
-```javascript
-score = 0.4 (base firmographic match)
-      + 0.3 (tech stack found)
-      + 0.3 (hiring signal detected)
-Resulting in a confidence score (0.0–1.0) for each company.
+This results in a confidence score (0.0 – 1.0) representing how strongly a company matches the target ICP.
 
 🧱 Example ICP Input (Postman)
-json
 {
   "ICP": {
     "industry": ["B2B Software"],
@@ -65,9 +78,8 @@ json
     "geography": ["USA"]
   }
 }
+
 📊 Example JSON Output
-json
-Copy code
 {
   "company_name": "Snowflake",
   "domain": "snowflake.com",
@@ -98,44 +110,48 @@ Copy code
   "signals": {
     "recent_hiring": true
   },
-  "source": ["Apollo", "SerpAPI"],
+  "source": ["Apollo", "BuiltWith", "SerpAPI"],
   "confidence": "1.00"
 }
-⚙️ How to Run the Demo
-🧪 Option 1 — Test via Postman
-Copy your webhook test URL from n8n (e.g., https://satyam-prospectagent.app.n8n.cloud/webhook-test/...)
 
-In Postman, create a new POST request.
+🧪 How to Run the Demo
+Option 1 — Test via Postman
 
-Paste the webhook URL.
+Copy your n8n webhook test URL (e.g., https://satyam-prospectagent.app.n8n.cloud/webhook-test/...)
 
-Add the sample ICP JSON as the body.
+In Postman, create a POST request with the above URL.
 
-Click Send — you’ll receive the enriched company JSON as a response.
+Paste the sample ICP JSON in the request body.
 
-🧪 Option 2 — Inside n8n
+Click Send.
+
+View the enriched JSON response in Postman.
+
+Option 2 — Execute Inside n8n
+
 Click Execute Workflow.
 
-Watch nodes turn green in real-time.
+Watch each node turn green as data flows through.
 
-See merged and scored output in the Merge Results node.
+View the merged and scored JSON inside the Merge Results node.
 
 📂 Repository Structure
-bash
 ProspectSearchAgent/
 │
 ├── README.md                # Project documentation
+├── langchain_pipeline.py    # Local orchestration using LangChain
 ├── n8n_workflow.json        # Exported n8n workflow
 ├── example_output.json      # Sample run output
-└── screenshots/             # Optional demo screenshots
+└── screenshots/             # Workflow images
+
 💡 Design Choices
-Used n8n for orchestration to mimic agent-like automation.
 
-Used Apollo.io Free API for rich company data.
+Used LangChain for modular orchestration and logic management.
 
-Used SerpAPI to extract job listings as a real-time hiring signal.
+Used n8n Cloud for visual end-to-end workflow execution.
 
-Merge Results node acts as the “intelligent agent brain” — merging, scoring, and formatting all API data.
+Used Apollo, BuiltWith, and SerpAPI as the data sources.
 
-Final JSON output is clean and standardized for easy downstream usage.
+The Merge Results node acts as the intelligent “agent brain,” merging all sources and scoring matches.
 
+The output format is clean, standardized JSON, ideal for integration into dashboards or CRMs.
